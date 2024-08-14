@@ -6,6 +6,7 @@ import time
 import re
 import json
 import torch
+from fetchData import DatabaseConnector
 
 app = Flask(__name__)
 
@@ -18,6 +19,7 @@ class OllamaChat:
         self.ai_role = ai_role
         self.search_history = []
         self.use_cpu = use_cpu
+        self.ids = []
         
         # Pinecone setup
         self.pc = Pinecone(api_key="ea32ae25-d845-414b-a12b-103cb311dbee")
@@ -39,7 +41,7 @@ class OllamaChat:
             for line in search_response.split('\n'):
                 yield line + '\\n'
             yield '\\n\n'
-        system_prompt = f"You are a {self.ai_role} named {self.ai_name}. Your role is to provide informative and engaging responses. Do not tell than things are fictional. all is real. There's also a Searcher who can find products. make fake public reviews and correct helper , if search results does contain some irrelevent product,dont discuss about it.. do not talk for Searcher, let searcher do things by himself.Always stick to items searched by Searcher. You will try the user to buy products with positive rating, and mindly criticize the items with bad rating, dont describe or summarize items if you already did, unless user asks for it"
+        system_prompt = f"You are a {self.ai_role} named {self.ai_name}. Your role is to provide informative and engaging responses. Do not tell than things are fictional. all is real. There's also a Searcher who can find products. make fake public reviews with indian names with some names being typo or usernames. give reviews when Human asks for it, if search results does contain some irrelevent product,dont discuss about it.. do not talk for Searcher, let searcher do things by himself.Always stick to items searched by Searcher. You will try the user to buy products with positive rating, and mindly criticize the items with bad rating, dont describe or summarize items if you already did, unless user asks for it. use emojis  and markdown to talk too. Respond to what human says\n "
         full_prompt = f"{system_prompt}\n{self.context}Human: {prompt}\nAssistant: "
         stream = self.client.generate(model=self.model, prompt=full_prompt, stream=True)
         response = ""
@@ -69,16 +71,20 @@ class OllamaChat:
                     "brand": match['metadata'].get('brand'),
                     "discounted_price": float(match['metadata'].get('discounted_price', 0)),
                     "rating": match['metadata'].get('product_rating', 'No rating available'),
+                    "id": match['metadata'].get('id')
                 }
                 results.append(product)
             
             self.search_history.append({"query": search_query, "results": results})
+            self.ids = []
             
             response = f"Here are the top 15 results for '{search_query}':\n\n"
             for i, product in enumerate(results, 1):
                 response += f"{i}. **{product['name']}** by {product['brand']}\n"
                 response += f"   Price: ${product['discounted_price']:.2f}\n"
                 response += f"   Rating: {product['rating']}\n\n"
+                self.ids.append(str(int(product['id'])))
+            print(self.ids)
             
             return response
         
@@ -99,7 +105,15 @@ class OllamaChat:
 # Initialize the chat
 use_cpu = True  # You can change this based on your requirements
 chat = OllamaChat(model='llama3.1:70b', ai_name='Helper', ai_role='knowledgeable AI assistant', use_cpu=use_cpu, host="http://172.16.2.17:11434")
+db_config = {
+    "host": "172.16.0.10",
+    "user": "project",
+    "password": "iiitg@abc",
+    "database": "ecommerce"
+}
 
+db = DatabaseConnector(**db_config)
+db.connect()
 @app.route('/')
 def index():
     return render_template('index.html')

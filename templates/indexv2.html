@@ -154,8 +154,44 @@
         <input type="text" id="user-input" placeholder="Type your message...">
         <button onclick="sendMessage()">Send</button>
         <button onclick="clearContext()">Clear</button>
+        <button onclick="previewItems()">Look In Detail</button>
     </div>
     <script>
+        //function previewitems opens a closable floating box on screen with the details of the item
+        function previewItems(){
+            var previewBox = document.createElement("div");
+            previewBox.id = "previewBox";
+            previewBox.style.position = "fixed";
+            previewBox.style.top = "50%";
+            previewBox.style.left = "50%";
+            previewBox.style.transform = "translate(-50%, -50%)";
+            previewBox.style.width = "50%";
+            previewBox.style.height = "50%";
+            previewBox.style.backgroundColor = "white";
+            previewBox.style.zIndex = "1000";
+            previewBox.style.borderRadius = "10px";
+            previewBox.style.padding = "20px";
+            previewBox.style.boxShadow = "0 10px 30px rgba(0, 0, 0, 0.1)";
+            previewBox.style.overflowY = "auto";
+            //close button on top right corner of screen
+            var closeButton = document.createElement("button");
+            closeButton.innerHTML = "Close";
+            closeButton.style.position = "absolute";
+            closeButton.style.top = "10px";
+            closeButton.style.right = "10px";
+            closeButton.style.padding = "10px";
+            closeButton.style.border = "none";
+            closeButton.style.borderRadius = "5px";
+            closeButton.style.backgroundColor = "red";
+            closeButton.style.color = "white";
+            closeButton.style.cursor = "pointer";
+            closeButton.onclick = closePreview;
+            previewBox.appendChild(closeButton);
+            document.body.appendChild(previewBox);
+        }
+        closePreview = function(){
+            document.getElementById("previewBox").remove();
+        }
         function sendMessage() {
             var userInput = $('#user-input').val();
             $('#chat-container').append('<div class="message user-message animate__animated animate__fadeInUp">' + marked.parse(userInput) + '</div>');
