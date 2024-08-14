@@ -1,48 +1,363 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Chat with Helper and Searcher</title>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+
     <style>
-        #chat-container {
-            width: 500px;
-            height: 400px;
-            border: 1px solid #ccc;
-            overflow-y: scroll;
-            padding: 10px;
-            margin-bottom: 10px;
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
-        .helper-response {
-            white-space: pre-wrap;
+
+        body {
+            background: linear-gradient(-45deg, #ff9a9e, #fad0c4, #ffecd2);
+            background-size: 400% 400%;
+            animation: gradient 15s ease infinite;
+            font-family: 'Poppins', sans-serif;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            color: #333;
+        }
+
+        @keyframes gradient {
+            0% {
+                background-position: 0% 50%;
+            }
+
+            50% {
+                background-position: 100% 50%;
+            }
+
+            100% {
+                background-position: 0% 50%;
+            }
+        }
+
+        #chat-container {
+            flex-grow: 1;
+            overflow-y: auto;
+            padding: 20px;
+            background-color: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(10px);
+            border-radius: 10px;
+            margin: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .message {
+            margin-bottom: 15px;
+            padding: 10px 15px;
+            border-radius: 20px;
+            max-width: 80%;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        .user-message {
+            background-color: #e1f5fe;
+            align-self: flex-end;
+            margin-left: auto;
+        }
+
+        .helper-message {
+            background-color: #f3e5f5;
+            align-self: flex-start;
+            padding-left: 4%;
+        }
+
+        #input-container {
+            display: flex;
+            padding: 20px;
+            background-color: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+        }
+
+        #user-input {
+            flex-grow: 1;
+            padding: 15px;
+            border: none;
+            border-radius: 25px;
+            font-size: 16px;
+            font-family: 'Poppins', sans-serif;
+            background-color: #f5f5f5;
+            transition: all 0.3s ease;
+        }
+
+        #user-input:focus {
+            outline: none;
+            box-shadow: 0 0 0 2px #ff9a9e;
+        }
+
+        button {
+            padding: 15px 25px;
+            margin-left: 10px;
+            border: none;
+            border-radius: 25px;
+            background-color: #ff9a9e;
+            color: white;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        button:hover {
+            background-color: #ff7e82;
+            transform: translateY(-2px);
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* New styles for the overlay */
+        #overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            transition: opacity 0.5s ease;
+        }
+
+        #overlay-content {
+            text-align: center;
+            color: white;
+        }
+
+        #overlay h1 {
+            font-size: 3rem;
+            margin-bottom: 2rem;
+        }
+
+        #continue-btn {
+            font-size: 1.5rem;
+            padding: 1rem 2rem;
+        }
+        #searchBar {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th, td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+        }
+
+        .item-image {
+            max-width: 100px;
+            max-height: 100px;
+            object-fit: contain;
         }
     </style>
 </head>
-<body>
-    <div id="chat-container"></div>
-    <input type="text" id="user-input" placeholder="Type your message...">
-    <button onclick="sendMessage()">Send</button>
-    <button onclick="clearContext()">Clear Context</button>
 
+<body>
+    <div id="overlay">
+        <div id="overlay-content">
+            <h1>Welcome to the Chatbot</h1>
+            <button id="continue-btn">Continue</button>
+        </div>
+    </div>
+    <div id="chat-container"></div>
+    <div id="input-container">
+        <input type="text" id="user-input" placeholder="Type your message...">
+        <button onclick="sendMessage()">Send</button>
+        <button onclick="clearContext()">Clear</button>
+        <button onclick="previewItems()">Look In Detail</button>
+    </div>
     <script>
+        function previewItems() {
+            var previewBox = document.createElement("div");
+            previewBox.id = "previewBox";
+            previewBox.style.position = "fixed";
+            previewBox.style.top = "50%";
+            previewBox.style.left = "50%";
+            previewBox.style.transform = "translate(-50%, -50%)";
+            previewBox.style.width = "80%";
+            previewBox.style.height = "80%";
+            previewBox.style.backgroundColor = "white";
+            previewBox.style.zIndex = "1000";
+            previewBox.style.borderRadius = "10px";
+            previewBox.style.padding = "20px";
+            previewBox.style.boxShadow = "0 10px 30px rgba(0, 0, 0, 0.1)";
+            previewBox.style.overflowY = "auto";
+    
+            var closeButton = document.createElement("button");
+            closeButton.innerHTML = "Close";
+            closeButton.style.position = "absolute";
+            closeButton.style.top = "10px";
+            closeButton.style.right = "10px";
+            closeButton.style.padding = "10px";
+            closeButton.style.border = "none";
+            closeButton.style.borderRadius = "5px";
+            closeButton.style.backgroundColor = "red";
+            closeButton.style.color = "white";
+            closeButton.style.cursor = "pointer";
+            closeButton.onclick = closePreview;
+            previewBox.appendChild(closeButton);
+    
+            var searchBar = document.createElement("input");
+            searchBar.type = "text";
+            searchBar.id = "searchBar";
+            searchBar.placeholder = "Search items...";
+            searchBar.style.width = "100%";
+            searchBar.style.padding = "10px";
+            searchBar.style.marginBottom = "20px";
+            searchBar.style.border = "1px solid #ddd";
+            searchBar.style.borderRadius = "5px";
+            searchBar.style.fontSize = "16px";
+            previewBox.appendChild(searchBar);
+    
+            var table = document.createElement("table");
+            table.style.width = "100%";
+            table.style.borderCollapse = "collapse";
+            var thead = table.createTHead();
+            var headerRow = thead.insertRow();
+            ["Image", "Product Name", "Brand", "Price", "Rating", "Description"].forEach(headerText => {
+                var th = document.createElement("th");
+                th.textContent = headerText;
+                th.style.padding = "10px";
+                th.style.textAlign = "left";
+                th.style.borderBottom = "2px solid #ddd";
+                headerRow.appendChild(th);
+            });
+            var tbody = table.createTBody();
+            previewBox.appendChild(table);
+    
+            var loadingMessage = document.createElement("p");
+            loadingMessage.textContent = "Loading items...";
+            previewBox.appendChild(loadingMessage);
+    
+            document.body.appendChild(previewBox);
+    
+            fetch('/showitems', {
+                method: 'GET',
+            })
+                .then(response => response.json())
+                .then(data => {
+                    previewBox.removeChild(loadingMessage);
+    
+                    function renderRows(items) {
+                        tbody.innerHTML = ''; // Clear existing rows
+                        items.forEach(item => {
+                            var row = tbody.insertRow();
+                            
+                            // Image cell
+                            var imageCell = row.insertCell();
+                            if (item.image) {
+                                try {
+                                    var imageUrls = JSON.parse(item.image);
+                                    if (imageUrls.length > 0) {
+                                        var img = document.createElement("img");
+                                        img.src = imageUrls[0];
+                                        img.style.maxWidth = "100px";
+                                        img.style.maxHeight = "100px";
+                                        img.style.objectFit = "contain";
+                                        imageCell.appendChild(img);
+                                    }
+                                } catch (e) {
+                                    console.error("Error parsing image JSON:", e);
+                                }
+                            }
+    
+                            // Other cells
+                            row.insertCell().textContent = item.product_name;
+                            row.insertCell().textContent = item.brand;
+                            row.insertCell().textContent = `$${item.discounted_price}`;
+                            
+                            var ratingCell = row.insertCell();
+                            ratingCell.textContent = `★`.repeat(Math.round(item.product_rating)) + `☆`.repeat(5 - Math.round(item.product_rating));
+                            ratingCell.style.color = "#FFA41C";
+    
+                            row.insertCell().textContent = item.description;
+    
+                            // Style the row
+                            Array.from(row.cells).forEach(cell => {
+                                cell.style.padding = "10px";
+                                cell.style.borderBottom = "1px solid #ddd";
+                            });
+                        });
+                    }
+    
+                    renderRows(data);
+    
+                    searchBar.addEventListener('input', function() {
+                        var searchTerm = this.value.toLowerCase();
+                        var filteredData = data.filter(item => 
+                            item.product_name.toLowerCase().includes(searchTerm) ||
+                            item.brand.toLowerCase().includes(searchTerm) ||
+                            item.description.toLowerCase().includes(searchTerm)
+                        );
+                        renderRows(filteredData);
+                    });
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    previewBox.removeChild(loadingMessage);
+                    var errorMessage = document.createElement("p");
+                    errorMessage.textContent = "An error occurred while fetching items.";
+                    errorMessage.style.color = "red";
+                    previewBox.appendChild(errorMessage);
+                });
+        }
+    
+        function closePreview() {
+            document.getElementById("previewBox").remove();
+        }
+    
         function sendMessage() {
             var userInput = $('#user-input').val();
-            $('#chat-container').append('<p><strong>You:</strong> ' + marked.parse(userInput) + '</p>');
+            $('#chat-container').append('<div class="message user-message animate__animated animate__fadeInUp">' + marked.parse(userInput) + '</div>');
             $('#user-input').val('');
-
             fetch('/chat', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({message: userInput})
+                body: JSON.stringify({ message: userInput })
             }).then(response => {
                 const reader = response.body.getReader();
                 const decoder = new TextDecoder();
                 let helperResponse = '';
-
                 function readStream() {
                     reader.read().then(({ done, value }) => {
                         if (done) {
@@ -54,13 +369,12 @@
                             if (line.startsWith('data: ')) {
                                 const word = line.slice(6);
                                 if (word === 'START') {
-                                    $('#chat-container').append('<p class="helper-response"><strong>Helper:</strong> </p>');
+                                    $('#chat-container').append('<div class="message helper-message animate__animated animate__fadeInUp"></div>');
                                 } else if (word === 'END') {
-                            // Do nothing
+                                    // Do nothing
                                 } else {
                                     helperResponse += word.replace(/\\n/g, '\n');
-                                    // Render markdown in real-time
-                                    $('.helper-response:last').html('<strong>Helper:</strong> ' + marked.parse(helperResponse));
+                                    $('.helper-message:last').html(marked.parse(helperResponse));
                                 }
                                 $('#chat-container').scrollTop($('#chat-container')[0].scrollHeight);
                             }
@@ -68,24 +382,34 @@
                         readStream();
                     });
                 }
-
                 readStream();
             });
         }
-
+    
         function clearContext() {
-            $.post('/clear_context', function(data) {
-                $('#chat-container').append('<p><em>' + marked.parse(data.message) + '</em></p>');
+            $.post('/clear_context', function (data) {
+                $('#chat-container').append('<div class="message system-message animate__animated animate__fadeIn">' + marked.parse(data.message) + '</div>');
                 $('#chat-container').scrollTop($('#chat-container')[0].scrollHeight);
             });
         }
-
-        $('#user-input').keypress(function(e) {
+    
+        $('#user-input').keypress(function (e) {
             if (e.which == 13) {
                 sendMessage();
                 return false;
             }
         });
+    
+        // Overlay script
+        $(document).ready(function () {
+            $('#continue-btn').click(function () {
+                $('#overlay').css('opacity', '0');
+                setTimeout(function () {
+                    $('#overlay').css('display', 'none');
+                }, 500);
+            });
+        });
     </script>
 </body>
+
 </html>
