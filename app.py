@@ -7,6 +7,8 @@ import re
 import json
 import torch
 from fetchData import DatabaseConnector
+import threading
+import time
 
 app = Flask(__name__)
 
@@ -94,6 +96,7 @@ class OllamaChat:
     def clear_context(self):
         self.context = f"Searcher: Hello, I'm the product searcher. I can help find products for you.\n"
         self.search_history = []
+        self.ids=[]
 
     def trim_context(self, max_length=2000):
         while len(self.context) > max_length:
@@ -105,6 +108,34 @@ class OllamaChat:
 # Initialize the chat
 use_cpu = True  # You can change this based on your requirements
 chat = OllamaChat(model='llama3.1:70b', ai_name='Helper', ai_role='knowledgeable AI assistant', use_cpu=use_cpu, host="http://172.16.2.17:11434")
+
+
+def independent_ollama_caller(host="http://172.16.2.17:11434", model="llama3.1:70b", interval=50):
+    """
+    Function to periodically call Ollama independently of the main chat.
+    
+    :param host: Ollama host address
+    :param model: Model to use
+    :param interval: Time interval between calls in seconds
+    """
+    client = Client(host=host)
+    
+    while True:
+        try:
+            prompt = "Summarize the benefits of regular exercise in one sentence."
+            response = client.generate(model=model, prompt=prompt)
+            print(f"Independent Ollama call response: {response['response']}")
+        except Exception as e:
+            print(f"Error in independent Ollama call: {str(e)}")
+        
+        time.sleep(interval)
+
+# Start the independent Ollama caller thread
+independent_ollama_thread = threading.Thread(target=independent_ollama_caller, daemon=True)
+independent_ollama_thread.start()
+
+
+
 db_config = {
     "host": "172.16.0.10",
     "user": "project",
