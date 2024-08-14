@@ -37,7 +37,7 @@ class OllamaChat:
             search_response = self.search_products(prompt)
             self.context += f"Human: {prompt}\nSearcher: {search_response}\n"
             for line in search_response.split('\n'):
-                yield line + '\n'
+                yield line + '\\n'
         system_prompt = f"You are a {self.ai_role} named {self.ai_name}. Your role is to provide informative and engaging responses. Do not tell than things are fictional. all is real. There's also a Searcher who can find products. make fake public reviews and correct helper , if search results does contain some irrelevent product,dont discuss about it.. do not talk for Searcher, let searcher do things by himself. You will try the user to buy products with positive rating, and mindly criticize the items with bad rating, dont describe or summarize items if you already did, unless user asks for it"
         full_prompt = f"{system_prompt}\n{self.context}Human: {prompt}\nAssistant: "
         stream = self.client.generate(model=self.model, prompt=full_prompt, stream=True)
@@ -45,6 +45,7 @@ class OllamaChat:
         for chunk in stream:
             word = chunk['response']
             yield word.replace('\n', '\\n')  # Replace newlines with escaped newlines
+            #yield word
             response += word
             time.sleep(0.05)
         self.context += f"Human: {prompt}\n{self.ai_name}: {response}\n"
@@ -101,6 +102,10 @@ chat = OllamaChat(model='llama3.1:70b', ai_name='Helper', ai_role='knowledgeable
 @app.route('/')
 def index():
     return render_template('index.html')
+
+@app.route('/v2')
+def indexv2():
+    return render_template('indexv2.html')
 
 @app.route('/chat', methods=['POST'])
 def chat_endpoint():
