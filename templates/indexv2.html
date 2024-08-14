@@ -110,9 +110,45 @@
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
         }
+
+        /* New styles for the overlay */
+        #overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            transition: opacity 0.5s ease;
+        }
+
+        #overlay-content {
+            text-align: center;
+            color: white;
+        }
+
+        #overlay h1 {
+            font-size: 3rem;
+            margin-bottom: 2rem;
+        }
+
+        #continue-btn {
+            font-size: 1.5rem;
+            padding: 1rem 2rem;
+        }
     </style>
 </head>
 <body>
+    <div id="overlay">
+        <div id="overlay-content">
+            <h1>Welcome to the Chatbot</h1>
+            <button id="continue-btn">Continue</button>
+        </div>
+    </div>
     <div id="chat-container"></div>
     <div id="input-container">
         <input type="text" id="user-input" placeholder="Type your message...">
@@ -172,6 +208,16 @@
                 sendMessage();
                 return false;
             }
+        });
+
+        // New script for the overlay
+        $(document).ready(function() {
+            $('#continue-btn').click(function() {
+                $('#overlay').css('opacity', '0');
+                setTimeout(function() {
+                    $('#overlay').css('display', 'none');
+                }, 500);
+            });
         });
     </script>
 </body>

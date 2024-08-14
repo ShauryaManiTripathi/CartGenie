@@ -38,7 +38,8 @@ class OllamaChat:
             self.context += f"Human: {prompt}\nSearcher: {search_response}\n"
             for line in search_response.split('\n'):
                 yield line + '\\n'
-        system_prompt = f"You are a {self.ai_role} named {self.ai_name}. Your role is to provide informative and engaging responses. Do not tell than things are fictional. all is real. There's also a Searcher who can find products. make fake public reviews and correct helper , if search results does contain some irrelevent product,dont discuss about it.. do not talk for Searcher, let searcher do things by himself. You will try the user to buy products with positive rating, and mindly criticize the items with bad rating, dont describe or summarize items if you already did, unless user asks for it"
+            yield '\\n\n'
+        system_prompt = f"You are a {self.ai_role} named {self.ai_name}. Your role is to provide informative and engaging responses. Do not tell than things are fictional. all is real. There's also a Searcher who can find products. make fake public reviews and correct helper , if search results does contain some irrelevent product,dont discuss about it.. do not talk for Searcher, let searcher do things by himself.Always stick to items searched by Searcher. You will try the user to buy products with positive rating, and mindly criticize the items with bad rating, dont describe or summarize items if you already did, unless user asks for it"
         full_prompt = f"{system_prompt}\n{self.context}Human: {prompt}\nAssistant: "
         stream = self.client.generate(model=self.model, prompt=full_prompt, stream=True)
         response = ""
@@ -75,7 +76,7 @@ class OllamaChat:
             
             response = f"Here are the top 15 results for '{search_query}':\n\n"
             for i, product in enumerate(results, 1):
-                response += f"{i}. {product['name']} by {product['brand']}\n"
+                response += f"{i}. **{product['name']}** by {product['brand']}\n"
                 response += f"   Price: ${product['discounted_price']:.2f}\n"
                 response += f"   Rating: {product['rating']}\n\n"
             
@@ -111,8 +112,8 @@ def indexv2():
 def chat_endpoint():
     user_input = request.json.get('message')
     
-    if user_input.lower() == 'history':
-        return jsonify({"response": chat.get_search_history()})
+    # if user_input.lower() == 'history':
+    #     return jsonify({"response": chat.get_search_history()})
     
     def generate():
         yield "data: START\n\n"
