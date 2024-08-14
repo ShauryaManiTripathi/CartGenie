@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat with Helper and Searcher</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <style>
+        #chat-container {
+            width: 500px;
+            height: 400px;
+            border: 1px solid #ccc;
+            overflow-y: scroll;
+            padding: 10px;
+            margin-bottom: 10px;
+        }
+        .helper-response {
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+    <div id="chat-container"></div>
+    <input type="text" id="user-input" placeholder="Type your message...">
+    <button onclick="sendMessage()">Send</button>
+    <button onclick="clearContext()">Clear Context</button>
+
+    <script>
+        function sendMessage() {
+            var userInput = $('#user-input').val();
+            $('#chat-container').append('<p><strong>You:</strong> ' + marked.parse(userInput) + '</p>');
+            $('#user-input').val('');
+
+            fetch('/chat', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({message: userInput})
+            }).then(response => {
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                let helperResponse = '';
+
+                function readStream() {
+                    reader.read().then(({ done, value }) => {
+                        if (done) {
+                            return;
+                        }
+                        const chunk = decoder.decode(value);
+                        const lines = chunk.split('\n');
+                        lines.forEach(line => {
+                            if (line.startsWith('data: ')) {
+                                const word = line.slice(6);
+                                if (word === 'START') {
+                                    $('#chat-container').append('<p class="helper-response"><strong>Helper:</strong> </p>');
+                                } else if (word === 'END') {
+                            // Do nothing
+                                } else {
+                                    helperResponse += word.replace(/\\n/g, '\n');
+                                    // Render markdown in real-time
+                                    $('.helper-response:last').html('<strong>Helper:</strong> ' + marked.parse(helperResponse));
+                                }
+                                $('#chat-container').scrollTop($('#chat-container')[0].scrollHeight);
+                            }
+                        });
+                        readStream();
+                    });
+                }
+
+                readStream();
+            });
+        }
+
+        function clearContext() {
+            $.post('/clear_context', function(data) {
+                $('#chat-container').append('<p><em>' + marked.parse(data.message) + '</em></p>');
+                $('#chat-container').scrollTop($('#chat-container')[0].scrollHeight);
+            });
+        }
+
+        $('#user-input').keypress(function(e) {
+            if (e.which == 13) {
+                sendMessage();
+                return false;
+            }
+        });
+    </script>
+</body>
+</html>
