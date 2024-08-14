@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,7 +9,7 @@
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
-    
+
     <style>
         * {
             margin: 0;
@@ -28,9 +29,17 @@
         }
 
         @keyframes gradient {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
+            0% {
+                background-position: 0% 50%;
+            }
+
+            50% {
+                background-position: 100% 50%;
+            }
+
+            100% {
+                background-position: 0% 50%;
+            }
         }
 
         #chat-container {
@@ -107,8 +116,15 @@
         }
 
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         /* New styles for the overlay */
@@ -142,6 +158,7 @@
         }
     </style>
 </head>
+
 <body>
     <div id="overlay">
         <div id="overlay-content">
@@ -157,23 +174,22 @@
         <button onclick="previewItems()">Look In Detail</button>
     </div>
     <script>
-        //function previewitems opens a closable floating box on screen with the details of the item
-        function previewItems(){
+        function previewItems() {
             var previewBox = document.createElement("div");
             previewBox.id = "previewBox";
             previewBox.style.position = "fixed";
             previewBox.style.top = "50%";
             previewBox.style.left = "50%";
             previewBox.style.transform = "translate(-50%, -50%)";
-            previewBox.style.width = "50%";
-            previewBox.style.height = "50%";
+            previewBox.style.width = "80%";
+            previewBox.style.height = "80%";
             previewBox.style.backgroundColor = "white";
             previewBox.style.zIndex = "1000";
             previewBox.style.borderRadius = "10px";
             previewBox.style.padding = "20px";
             previewBox.style.boxShadow = "0 10px 30px rgba(0, 0, 0, 0.1)";
             previewBox.style.overflowY = "auto";
-            //close button on top right corner of screen
+
             var closeButton = document.createElement("button");
             closeButton.innerHTML = "Close";
             closeButton.style.position = "absolute";
@@ -187,9 +203,147 @@
             closeButton.style.cursor = "pointer";
             closeButton.onclick = closePreview;
             previewBox.appendChild(closeButton);
+
+            var loadingMessage = document.createElement("p");
+            loadingMessage.textContent = "Loading items...";
+            previewBox.appendChild(loadingMessage);
+
             document.body.appendChild(previewBox);
+
+            // Make an API call to the server
+            fetch('/showitems', {
+                method: 'GET',
+            })
+                .then(response => response.json())
+                .then(data => {
+                    // Remove loading message
+                    previewBox.removeChild(loadingMessage);
+
+                    // Process the received data and populate the preview box
+                    data.forEach(item => {
+                        var itemDiv = document.createElement("div");
+                        itemDiv.className = "item-preview";
+                        itemDiv.style.marginBottom = "30px";
+                        itemDiv.style.padding = "20px";
+                        itemDiv.style.border = "1px solid #ddd";
+                        itemDiv.style.borderRadius = "8px";
+                        itemDiv.style.display = "flex";
+                        itemDiv.style.backgroundColor = "#fff";
+
+                        var imageContainer = document.createElement("div");
+                        imageContainer.style.width = "300px";  // Fixed width
+                        imageContainer.style.marginRight = "20px";
+
+                        if (item.image) {
+                            try {
+                                var imageUrls = JSON.parse(item.image);
+                                if (imageUrls.length > 0) {
+                                    var mainImageContainer = document.createElement("div");
+                                    mainImageContainer.style.width = "300px";
+                                    mainImageContainer.style.height = "300px";
+                                    mainImageContainer.style.display = "flex";
+                                    mainImageContainer.style.justifyContent = "center";
+                                    mainImageContainer.style.alignItems = "center";
+                                    mainImageContainer.style.marginBottom = "10px";
+                                    mainImageContainer.style.border = "1px solid #ddd";
+
+                                    var mainImage = document.createElement("img");
+                                    mainImage.src = imageUrls[0];
+                                    mainImage.style.maxWidth = "100%";
+                                    mainImage.style.maxHeight = "100%";
+                                    mainImage.style.objectFit = "contain";
+
+                                    mainImageContainer.appendChild(mainImage);
+                                    imageContainer.appendChild(mainImageContainer);
+
+                                    // Thumbnail container
+                                    var thumbnailContainer = document.createElement("div");
+                                    thumbnailContainer.style.display = "flex";
+                                    thumbnailContainer.style.justifyContent = "start";
+                                    thumbnailContainer.style.flexWrap = "wrap";
+
+                                    // Add all images as thumbnails
+                                    imageUrls.forEach((url, index) => {
+                                        var thumbnail = document.createElement("img");
+                                        thumbnail.src = url;
+                                        thumbnail.style.width = "50px";
+                                        thumbnail.style.height = "50px";
+                                        thumbnail.style.objectFit = "cover";
+                                        thumbnail.style.margin = "5px";
+                                        thumbnail.style.border = "1px solid #ddd";
+                                        thumbnail.style.cursor = "pointer";
+
+                                        thumbnail.addEventListener("click", function () {
+                                            mainImage.src = url;
+                                        });
+
+                                        thumbnailContainer.appendChild(thumbnail);
+                                    });
+
+                                    imageContainer.appendChild(thumbnailContainer);
+                                }
+                            } catch (e) {
+                                console.error("Error parsing image JSON:", e);
+                            }
+                        }
+
+                        itemDiv.appendChild(imageContainer);
+
+                        var infoContainer = document.createElement("div");
+                        infoContainer.style.flex = "1";
+
+                        var name = document.createElement("h2");
+                        name.textContent = item.product_name;
+                        name.style.fontSize = "24px";
+                        name.style.marginBottom = "10px";
+                        name.style.color = "#0066c0";
+                        infoContainer.appendChild(name);
+
+                        var brand = document.createElement("p");
+                        brand.textContent = `by ${item.brand}`;
+                        brand.style.fontSize = "14px";
+                        brand.style.color = "#555";
+                        brand.style.marginBottom = "10px";
+                        infoContainer.appendChild(brand);
+
+                        var rating = document.createElement("div");
+                        rating.textContent = `★`.repeat(Math.round(item.product_rating)) + `☆`.repeat(5 - Math.round(item.product_rating));
+                        rating.style.color = "#FFA41C";
+                        rating.style.fontSize = "18px";
+                        rating.style.marginBottom = "10px";
+                        infoContainer.appendChild(rating);
+
+                        var price = document.createElement("p");
+                        price.textContent = `$${item.discounted_price}`;
+                        price.style.fontSize = "28px";
+                        price.style.fontWeight = "bold";
+                        price.style.color = "#B12704";
+                        price.style.marginBottom = "15px";
+                        infoContainer.appendChild(price);
+
+                        var description = document.createElement("p");
+                        description.textContent = item.description;
+                        description.style.fontSize = "14px";
+                        description.style.lineHeight = "1.5";
+                        description.style.color = "#333";
+                        infoContainer.appendChild(description);
+
+                        itemDiv.appendChild(infoContainer);
+
+                        previewBox.appendChild(itemDiv);
+                    });
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    previewBox.removeChild(loadingMessage);
+                    var errorMessage = document.createElement("p");
+                    errorMessage.textContent = "An error occurred while fetching items.";
+                    errorMessage.style.color = "red";
+                    previewBox.appendChild(errorMessage);
+                });
         }
-        closePreview = function(){
+
+        function closePreview() {
             document.getElementById("previewBox").remove();
         }
         function sendMessage() {
@@ -201,7 +355,7 @@
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({message: userInput})
+                body: JSON.stringify({ message: userInput })
             }).then(response => {
                 const reader = response.body.getReader();
                 const decoder = new TextDecoder();
@@ -234,12 +388,12 @@
             });
         }
         function clearContext() {
-            $.post('/clear_context', function(data) {
+            $.post('/clear_context', function (data) {
                 $('#chat-container').append('<div class="message system-message animate__animated animate__fadeIn">' + marked.parse(data.message) + '</div>');
                 $('#chat-container').scrollTop($('#chat-container')[0].scrollHeight);
             });
         }
-        $('#user-input').keypress(function(e) {
+        $('#user-input').keypress(function (e) {
             if (e.which == 13) {
                 sendMessage();
                 return false;
@@ -247,14 +401,15 @@
         });
 
         // New script for the overlay
-        $(document).ready(function() {
-            $('#continue-btn').click(function() {
+        $(document).ready(function () {
+            $('#continue-btn').click(function () {
                 $('#overlay').css('opacity', '0');
-                setTimeout(function() {
+                setTimeout(function () {
                     $('#overlay').css('display', 'none');
                 }, 500);
             });
         });
     </script>
 </body>
+
 </html>

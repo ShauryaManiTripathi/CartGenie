@@ -144,5 +144,19 @@ def clear_context():
     chat.clear_context()
     return jsonify({"message": "Context cleared"})
 
+@app.route('/showitems', methods=['GET'])
+def show_items():
+    if not chat.ids:
+        return jsonify({"error": "No items to display"}), 404
+
+    product_data = db.fetch_product_data([int(id) for id in chat.ids])
+    
+    if not product_data:
+        return jsonify({"error": "Failed to fetch product data"}), 500
+
+    # Convert the dictionary to a list for JSON serialization
+    product_list = list(product_data.values())
+
+    return jsonify(product_list)
 if __name__ == '__main__':
     app.run(debug=True,port=3251,host="0.0.0.0")
