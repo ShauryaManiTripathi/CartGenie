@@ -117,7 +117,7 @@ db = DatabaseConnector(**db_config)
 db.connect()
 @app.route('/')
 def index():
-    return render_template('index.html')
+    return render_template('indexv2.html')
 
 @app.route('/v2')
 def indexv2():

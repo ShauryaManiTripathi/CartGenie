@@ -141,6 +141,13 @@
             z-index: 1000;
             transition: opacity 0.5s ease;
         }
+        #logo-container {
+            margin-bottom: 20px;
+        }
+        
+        #instructions {
+            text-align: center;
+        }
 
         #overlay-content {
             text-align: center;
@@ -161,11 +168,20 @@
 
 <body>
     <div id="overlay">
+        <div id="logo-container">
+            <img src="logo.png" alt="Logo" width="100px" height="100px">
+        </div>
         <div id="overlay-content">
-            <h1>Welcome to the Chatbot</h1>
+            <h1>Welcome to the CartGenie</h1>
+            <div id="instructions">
+                <p>Instruction 1: Click on the continue button to proceed.</p>
+                <p>Instruction 2: Please make sure you have read and understood the terms and conditions.</p>
+                <p>Instruction 3: If you have any questions, please contact our support team.</p>
+            </div>
             <button id="continue-btn">Continue</button>
         </div>
     </div>
+    
     <div id="chat-container"></div>
     <div id="input-container">
         <input type="text" id="user-input" placeholder="Type your message...">
