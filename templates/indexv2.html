@@ -324,7 +324,7 @@ function createItemDiv(item) {
                 thumbnailContainer.style.justifyContent = "start";
                 thumbnailContainer.style.flexWrap = "wrap";
 
-                imageUrls.forEach((url, index) => {
+                imageUrls.slice(0,5).forEach((url, index) => {
                     var thumbnail = document.createElement("img");
                     thumbnail.src = url;
                     thumbnail.style.width = "50px";
@@ -383,13 +383,17 @@ function createItemDiv(item) {
     infoContainer.appendChild(price);
 
     var description = document.createElement("p");
-    description.textContent = item.description;
-    description.style.fontSize = "14px";
-    description.style.lineHeight = "1.5";
-    description.style.color = "#333";
-    infoContainer.appendChild(description);
+description.textContent = item.description;
+description.style.fontSize = "14px";
+description.style.lineHeight = "1.5";
+description.style.color = "#333";
+description.style.overflow = "hidden";
+description.style.display = "-webkit-box";
+description.style.webkitLineClamp = "5";
+description.style.webkitBoxOrient = "vertical";
+infoContainer.appendChild(description);
 
-    itemDiv.appendChild(infoContainer);
+itemDiv.appendChild(infoContainer);
 
     return itemDiv;
 }
