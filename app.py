@@ -80,8 +80,8 @@ class OllamaChat:
             
             response = f"Here are the top 15 results for '{search_query}':\n\n"
             for i, product in enumerate(results, 1):
-                response += f"{i}. **{product['name']}** by {product['brand']}\n"
-                response += f"   Price: ${product['discounted_price']:.2f}\n"
+                response += f"{i}. **{product['name']}** by {product['brand']}\n\n"
+                response += f"   Price: ${product['discounted_price']:.2f}\\n\n\n"
                 response += f"   Rating: {product['rating']}\n\n"
                 self.ids.append(str(int(product['id'])))
             print(self.ids)
